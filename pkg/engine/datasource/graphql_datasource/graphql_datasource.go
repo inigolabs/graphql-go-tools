@@ -10,7 +10,7 @@ import (
 
 	"github.com/buger/jsonparser"
 	"github.com/tidwall/sjson"
-
+	"github.com/wundergraph/graphql-go-tools/internal/pkg/unsafebytes"
 	"github.com/wundergraph/graphql-go-tools/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/pkg/astnormalization"
 	"github.com/wundergraph/graphql-go-tools/pkg/astparser"
@@ -356,9 +356,20 @@ func (p *Planner) EnterOperationDefinition(ref int) {
 	if p.isNested {
 		operationType = ast.OperationTypeQuery
 	}
-	definition := p.upstreamOperation.AddOperationDefinitionToRootNodes(ast.OperationDefinition{
-		OperationType: operationType,
-	})
+
+	operationDefinition := ast.OperationDefinition{OperationType: operationType}
+
+	if len(p.visitor.OperationName) > 0 {
+		inputRawBytes := make([]byte, 0, len(p.upstreamOperation.Input.RawBytes)+len(p.visitor.OperationName))
+		inputRawBytes = append(p.upstreamOperation.Input.RawBytes, unsafebytes.StringToBytes(p.visitor.OperationName)...)
+
+		p.upstreamOperation.Input.RawBytes = inputRawBytes
+
+		operationDefinition.Name.Start = uint32(len(inputRawBytes) - len(p.visitor.OperationName))
+		operationDefinition.Name.End = uint32(len(inputRawBytes))
+	}
+
+	definition := p.upstreamOperation.AddOperationDefinitionToRootNodes(operationDefinition)
 	p.disallowSingleFlight = operationType == ast.OperationTypeMutation
 	p.nodes = append(p.nodes, definition)
 }
