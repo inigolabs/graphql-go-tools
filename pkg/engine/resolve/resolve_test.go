@@ -1544,7 +1544,7 @@ func TestResolver_WithHooks(t *testing.T) {
 		beforeFetch := NewMockBeforeFetchHook(ctrl)
 		beforeFetch.EXPECT().OnBeforeFetch(pathEq("/data/user"), []byte("fakeInput")).Return()
 		afterFetch := NewMockAfterFetchHook(ctrl)
-		afterFetch.EXPECT().OnData(pathEq("/data/user"), []byte(`{"id":"1","name":"Jens","registered":true,"pet":{"name":"Barky","kind":"Dog"}}`), false).Return()
+		afterFetch.EXPECT().OnData(pathEq("/data/user"), []byte(`{"id":"1","name":"Jens","registered":true,"pet":{"name":"Barky","kind":"Dog"}}`), []byte(`{"id":"1","name":"Jens","registered":true,"pet":{"name":"Barky","kind":"Dog"}}`), false).Return()
 		return &Object{
 			Fields: []*Field{
 				{
