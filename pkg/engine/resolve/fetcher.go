@@ -61,10 +61,10 @@ func (f *Fetcher) Fetch(ctx *Context, fetch *SingleFetch, preparedInput *fastbuf
 
 		if ctx.afterFetchHook != nil {
 			if buf.HasData() {
-				ctx.afterFetchHook.OnData(f.hookCtx(ctx), buf.Data.Bytes(), false)
+				ctx.afterFetchHook.OnData(f.hookCtx(ctx), dataBuf.Bytes(), buf.Data.Bytes(), false)
 			}
 			if buf.HasErrors() {
-				ctx.afterFetchHook.OnError(f.hookCtx(ctx), buf.Errors.Bytes(), false)
+				ctx.afterFetchHook.OnError(f.hookCtx(ctx), dataBuf.Bytes(), buf.Errors.Bytes(), false)
 			}
 		}
 		return
@@ -84,13 +84,13 @@ func (f *Fetcher) Fetch(ctx *Context, fetch *SingleFetch, preparedInput *fastbuf
 		inflight.waitLoad.Wait()
 		if inflight.bufPair.HasData() {
 			if ctx.afterFetchHook != nil {
-				ctx.afterFetchHook.OnData(f.hookCtx(ctx), inflight.bufPair.Data.Bytes(), true)
+				ctx.afterFetchHook.OnData(f.hookCtx(ctx), inflight.bufPair.Data.Bytes(), inflight.bufPair.Data.Bytes(), true)
 			}
 			buf.Data.WriteBytes(inflight.bufPair.Data.Bytes())
 		}
 		if inflight.bufPair.HasErrors() {
 			if ctx.afterFetchHook != nil {
-				ctx.afterFetchHook.OnError(f.hookCtx(ctx), inflight.bufPair.Errors.Bytes(), true)
+				ctx.afterFetchHook.OnError(f.hookCtx(ctx), inflight.bufPair.Errors.Bytes(), inflight.bufPair.Errors.Bytes(), true)
 			}
 			buf.Errors.WriteBytes(inflight.bufPair.Errors.Bytes())
 		}
@@ -109,14 +109,14 @@ func (f *Fetcher) Fetch(ctx *Context, fetch *SingleFetch, preparedInput *fastbuf
 
 	if inflight.bufPair.HasData() {
 		if ctx.afterFetchHook != nil {
-			ctx.afterFetchHook.OnData(f.hookCtx(ctx), inflight.bufPair.Data.Bytes(), false)
+			ctx.afterFetchHook.OnData(f.hookCtx(ctx), dataBuf.Bytes(), inflight.bufPair.Data.Bytes(), false)
 		}
 		buf.Data.WriteBytes(inflight.bufPair.Data.Bytes())
 	}
 
 	if inflight.bufPair.HasErrors() {
 		if ctx.afterFetchHook != nil {
-			ctx.afterFetchHook.OnError(f.hookCtx(ctx), inflight.bufPair.Errors.Bytes(), true)
+			ctx.afterFetchHook.OnError(f.hookCtx(ctx), dataBuf.Bytes(), inflight.bufPair.Errors.Bytes(), true)
 		}
 		buf.Errors.WriteBytes(inflight.bufPair.Errors.Bytes())
 	}
