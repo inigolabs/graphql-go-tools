@@ -1316,11 +1316,11 @@ type afterFetchHook struct {
 	err  string
 }
 
-func (a *afterFetchHook) OnData(ctx resolve.HookContext, output []byte, singleFlight bool) {
+func (a *afterFetchHook) OnData(ctx resolve.HookContext, _ []byte, output []byte, singleFlight bool) {
 	a.data += string(output)
 }
 
-func (a *afterFetchHook) OnError(ctx resolve.HookContext, output []byte, singleFlight bool) {
+func (a *afterFetchHook) OnError(ctx resolve.HookContext, _ []byte, output []byte, singleFlight bool) {
 	a.err += string(output)
 }
 
