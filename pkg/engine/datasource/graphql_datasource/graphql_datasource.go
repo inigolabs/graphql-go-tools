@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 
 	"github.com/buger/jsonparser"
 	"github.com/jensneuse/graphql-go-tools/pkg/asttransform"
@@ -1195,6 +1196,8 @@ func (s *Source) compactAndUnNullVariables(input []byte) []byte {
 	return input
 }
 
+var nullRegExp = regexp.MustCompile(": *?(null)")
+
 func (s *Source) unNullVariables(input []byte) ([]byte, bool) {
 	if i := bytes.Index(input, []byte(":{}")); i != -1 {
 		end := i + 3
@@ -1209,14 +1212,17 @@ func (s *Source) unNullVariables(input []byte) ([]byte, bool) {
 		}
 		return append(input[:startQuote], input[end:]...), true
 	}
-	if i := bytes.Index(input, []byte("null")); i != -1 {
-		end := i + 4
+
+	// TODO: use json.Walk to for better performance (needs to be tested maybe it will not help)
+	for _, i := range nullRegExp.FindIndex(input) {
+		end := i + 5
+
 		hasTrailingComma := false
 		if input[end] == ',' {
 			end++
 			hasTrailingComma = true
 		}
-		startQuote := bytes.LastIndex(input[:i-2], []byte("\""))
+		startQuote := bytes.LastIndex(input[:i-1], []byte("\""))
 		if !hasTrailingComma && input[startQuote-1] == ',' {
 			startQuote--
 		}
