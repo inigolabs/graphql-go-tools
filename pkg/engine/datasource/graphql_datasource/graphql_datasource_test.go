@@ -8234,6 +8234,20 @@ func TestUnNullVariables(t *testing.T) {
 		expected := `{"body":{"query":"{foo}","variables":null},"unnull_variables":true}`
 		assert.Equal(t, expected, string(out))
 	})
+
+	t.Run("two variables, one null inside a string", func(t *testing.T) {
+		s := &Source{}
+		out := s.compactAndUnNullVariables([]byte(`{"body":{"variables":{"a":true,"b":"inside_null_value"}}}`))
+		expected := `{"body":{"variables":{"a":true,"b":"inside_null_value"}}}`
+		assert.Equal(t, expected, string(out))
+	})
+
+	t.Run("two variables, one null as a string", func(t *testing.T) {
+		s := &Source{}
+		out := s.compactAndUnNullVariables([]byte(`{"body":{"variables":{"a":true,"b":"null"}}}`))
+		expected := `{"body":{"variables":{"a":true,"b":"null"}}}`
+		assert.Equal(t, expected, string(out))
+	})
 }
 
 func BenchmarkFederationBatching(b *testing.B) {
