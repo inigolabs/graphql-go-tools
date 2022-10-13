@@ -1681,11 +1681,11 @@ type afterFetchHook struct {
 	err  string
 }
 
-func (a *afterFetchHook) OnData(_ resolve.HookContext, _, output []byte, _ bool) {
+func (a *afterFetchHook) OnData(_ resolve.HookContext, _, output, _ []byte, _ bool) {
 	a.data += string(output)
 }
 
-func (a *afterFetchHook) OnError(_ resolve.HookContext, _, output []byte, _ bool) {
+func (a *afterFetchHook) OnError(_ resolve.HookContext, _, output, _ []byte, _ bool) {
 	a.err += string(output)
 }
 
