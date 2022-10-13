@@ -109,27 +109,27 @@ func (m *MockAfterFetchHook) EXPECT() *MockAfterFetchHookMockRecorder {
 }
 
 // OnData mocks base method.
-func (m *MockAfterFetchHook) OnData(arg0 HookContext, arg1, arg2 []byte, arg3 bool) {
+func (m *MockAfterFetchHook) OnData(arg0 HookContext, arg1, arg2, arg3 []byte, arg4 bool) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnData", arg0, arg1, arg2, arg3)
+	m.ctrl.Call(m, "OnData", arg0, arg1, arg2, arg3, arg4)
 }
 
 // OnData indicates an expected call of OnData.
-func (mr *MockAfterFetchHookMockRecorder) OnData(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockAfterFetchHookMockRecorder) OnData(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnData", reflect.TypeOf((*MockAfterFetchHook)(nil).OnData), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnData", reflect.TypeOf((*MockAfterFetchHook)(nil).OnData), arg0, arg1, arg2, arg3, arg4)
 }
 
 // OnError mocks base method.
-func (m *MockAfterFetchHook) OnError(arg0 HookContext, arg1, arg2 []byte, arg3 bool) {
+func (m *MockAfterFetchHook) OnError(arg0 HookContext, arg1, arg2, arg3 []byte, arg4 bool) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnError", arg0, arg1, arg2, arg3)
+	m.ctrl.Call(m, "OnError", arg0, arg1, arg2, arg3, arg4)
 }
 
 // OnError indicates an expected call of OnError.
-func (mr *MockAfterFetchHookMockRecorder) OnError(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockAfterFetchHookMockRecorder) OnError(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnError", reflect.TypeOf((*MockAfterFetchHook)(nil).OnError), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnError", reflect.TypeOf((*MockAfterFetchHook)(nil).OnError), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MockDataSourceBatch is a mock of DataSourceBatch interface.

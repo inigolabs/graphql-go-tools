@@ -112,8 +112,8 @@ type BeforeFetchHook interface {
 }
 
 type AfterFetchHook interface {
-	OnData(ctx HookContext, original, output []byte, singleFlight bool)
-	OnError(ctx HookContext, original, output []byte, singleFlight bool)
+	OnData(ctx HookContext, original, output, path []byte, singleFlight bool)
+	OnError(ctx HookContext, original, output, path []byte, singleFlight bool)
 }
 
 type Context struct {
