@@ -154,7 +154,11 @@ func TestParser_Parse(t *testing.T) {
 	})
 	t.Run("schema", func(t *testing.T) {
 		t.Run("simple", func(t *testing.T) {
-			run(`schema {
+			run(`
+					"""
+					schema
+					"""
+					schema {
 						query: Query
 						mutation: Mutation
 						subscription: Subscription 
