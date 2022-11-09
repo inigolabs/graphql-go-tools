@@ -228,7 +228,6 @@ func (p *Parser) errUnexpectedToken(unexpected token.Token, expectedKeywords ...
 }
 
 func (p *Parser) parseSchemaDefinition() {
-
 	schemaLiteral := p.read()
 
 	schemaDefinition := ast.SchemaDefinition{
@@ -717,6 +716,8 @@ func (p *Parser) parseRootDescription() {
 		p.parseDirectiveDefinition(&description)
 	case identkeyword.EXTEND:
 		p.parseExtension()
+	case identkeyword.SCHEMA:
+		p.parseSchemaDefinition() // description skipped
 	default:
 		p.errUnexpectedIdentKey(p.read(), next, identkeyword.TYPE, identkeyword.INPUT, identkeyword.SCALAR, identkeyword.INTERFACE, identkeyword.UNION, identkeyword.ENUM, identkeyword.DIRECTIVE)
 	}
