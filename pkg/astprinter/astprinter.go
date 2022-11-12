@@ -33,6 +33,19 @@ func PrintString(document, definition *ast.Document) (string, error) {
 	return out, err
 }
 
+// PrintStringNoDescription is the same as PrintString but doesn't print descriptions
+func PrintStringNoDescription(document, definition *ast.Document) (string, error) {
+	printer := Printer{
+		skipDescription: true,
+	}
+
+	buff := &bytes.Buffer{}
+	err := printer.Print(document, definition, buff)
+	out := buff.String()
+
+	return out, err
+}
+
 // PrintStringIndent is the same as PrintIndent but returns a string instead of writing to an io.Writer
 func PrintStringIndent(document, definition *ast.Document, indent string) (string, error) {
 	buff := &bytes.Buffer{}
@@ -43,7 +56,9 @@ func PrintStringIndent(document, definition *ast.Document, indent string) (strin
 
 // Printer walks a GraphQL document and prints it as a string
 type Printer struct {
-	indent     []byte
+	indent          []byte
+	skipDescription bool
+
 	visitor    printVisitor
 	walker     astvisitor.SimpleWalker
 	registered bool
@@ -53,6 +68,7 @@ type Printer struct {
 // Keep a printer and re-use it in case you'd like to print ASTs in the hot path.
 func (p *Printer) Print(document, definition *ast.Document, out io.Writer) error {
 	p.visitor.indent = p.indent
+	p.visitor.skipDescription = p.skipDescription
 	p.visitor.err = nil
 	p.visitor.document = document
 	p.visitor.out = out
@@ -74,6 +90,7 @@ type printVisitor struct {
 	inputValueDefinitionCloser []byte
 	isFirstDirectiveLocation   bool
 	isDirectiveRepeatable      bool
+	skipDescription            bool
 }
 
 func (p *printVisitor) write(data []byte) {
@@ -371,7 +388,7 @@ func (p *printVisitor) LeaveFragmentDefinition(ref int) {
 
 func (p *printVisitor) EnterObjectTypeDefinition(ref int) {
 
-	if p.document.ObjectTypeDefinitions[ref].Description.IsDefined {
+	if p.document.ObjectTypeDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.ObjectTypeDefinitions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -412,7 +429,7 @@ func (p *printVisitor) LeaveObjectTypeDefinition(ref int) {
 
 func (p *printVisitor) EnterObjectTypeExtension(ref int) {
 
-	if p.document.ObjectTypeExtensions[ref].Description.IsDefined {
+	if p.document.ObjectTypeExtensions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.ObjectTypeExtensions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -446,7 +463,7 @@ func (p *printVisitor) EnterFieldDefinition(ref int) {
 			p.write(literal.LINETERMINATOR)
 		}
 	}
-	if p.document.FieldDefinitions[ref].Description.IsDefined {
+	if p.document.FieldDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.FieldDefinitions[ref].Description, p.indent, p.indentationDepth(), p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -482,7 +499,7 @@ func (p *printVisitor) EnterInputValueDefinition(ref int) {
 			p.write(literal.LINETERMINATOR)
 		}
 	}
-	if p.document.InputValueDefinitions[ref].Description.IsDefined {
+	if p.document.InputValueDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.InputValueDefinitions[ref].Description, p.indent, p.indentationDepth(), p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -528,7 +545,7 @@ func (p *printVisitor) LeaveInputValueDefinition(ref int) {
 
 func (p *printVisitor) EnterInterfaceTypeDefinition(ref int) {
 
-	if p.document.InterfaceTypeDefinitions[ref].Description.IsDefined {
+	if p.document.InterfaceTypeDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.InterfaceTypeDefinitions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -555,7 +572,7 @@ func (p *printVisitor) LeaveInterfaceTypeDefinition(ref int) {
 
 func (p *printVisitor) EnterInterfaceTypeExtension(ref int) {
 
-	if p.document.InterfaceTypeExtensions[ref].Description.IsDefined {
+	if p.document.InterfaceTypeExtensions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.InterfaceTypeExtensions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -584,7 +601,7 @@ func (p *printVisitor) LeaveInterfaceTypeExtension(ref int) {
 
 func (p *printVisitor) EnterScalarTypeDefinition(ref int) {
 
-	if p.document.ScalarTypeDefinitions[ref].Description.IsDefined {
+	if p.document.ScalarTypeDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.ScalarTypeDefinitions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -610,7 +627,7 @@ func (p *printVisitor) LeaveScalarTypeDefinition(ref int) {
 
 func (p *printVisitor) EnterScalarTypeExtension(ref int) {
 
-	if p.document.ScalarTypeExtensions[ref].Description.IsDefined {
+	if p.document.ScalarTypeExtensions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.ScalarTypeExtensions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -638,7 +655,7 @@ func (p *printVisitor) LeaveScalarTypeExtension(ref int) {
 
 func (p *printVisitor) EnterUnionTypeDefinition(ref int) {
 
-	if p.document.UnionTypeDefinitions[ref].Description.IsDefined {
+	if p.document.UnionTypeDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.UnionTypeDefinitions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -664,7 +681,7 @@ func (p *printVisitor) LeaveUnionTypeDefinition(ref int) {
 
 func (p *printVisitor) EnterUnionTypeExtension(ref int) {
 
-	if p.document.UnionTypeExtensions[ref].Description.IsDefined {
+	if p.document.UnionTypeExtensions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.UnionTypeExtensions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -710,7 +727,7 @@ func (p *printVisitor) LeaveUnionMemberType(ref int) {
 
 func (p *printVisitor) EnterEnumTypeDefinition(ref int) {
 
-	if p.document.EnumTypeDefinitions[ref].Description.IsDefined {
+	if p.document.EnumTypeDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.EnumTypeDefinitions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -736,7 +753,7 @@ func (p *printVisitor) LeaveEnumTypeDefinition(ref int) {
 
 func (p *printVisitor) EnterEnumTypeExtension(ref int) {
 
-	if p.document.EnumTypeExtensions[ref].Description.IsDefined {
+	if p.document.EnumTypeExtensions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.EnumTypeExtensions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -770,7 +787,7 @@ func (p *printVisitor) EnterEnumValueDefinition(ref int) {
 			p.write(literal.LINETERMINATOR)
 		}
 	}
-	if p.document.EnumValueDefinitions[ref].Description.IsDefined {
+	if p.document.EnumValueDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.EnumValueDefinitions[ref].Description, p.indent, p.indentationDepth(), p.out))
 		p.write(literal.LINETERMINATOR)
 	}
@@ -794,7 +811,7 @@ func (p *printVisitor) LeaveEnumValueDefinition(ref int) {
 
 func (p *printVisitor) EnterInputObjectTypeDefinition(ref int) {
 
-	if p.document.InputObjectTypeDefinitions[ref].Description.IsDefined {
+	if p.document.InputObjectTypeDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.InputObjectTypeDefinitions[ref].Description, nil, 0, p.out))
 		if p.indent != nil {
 			p.write(literal.LINETERMINATOR)
@@ -823,7 +840,7 @@ func (p *printVisitor) LeaveInputObjectTypeDefinition(ref int) {
 
 func (p *printVisitor) EnterInputObjectTypeExtension(ref int) {
 
-	if p.document.InputObjectTypeExtensions[ref].Description.IsDefined {
+	if p.document.InputObjectTypeExtensions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.InputObjectTypeExtensions[ref].Description, nil, 0, p.out))
 		if p.indent != nil {
 			p.write(literal.LINETERMINATOR)
@@ -853,7 +870,7 @@ func (p *printVisitor) LeaveInputObjectTypeExtension(ref int) {
 }
 
 func (p *printVisitor) EnterDirectiveDefinition(ref int) {
-	if p.document.DirectiveDefinitions[ref].Description.IsDefined {
+	if p.document.DirectiveDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.DirectiveDefinitions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
 	}
