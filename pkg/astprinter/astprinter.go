@@ -57,6 +57,19 @@ func PrintString(document, definition *ast.Document, options ...func(*Printer)) 
 	return out, err
 }
 
+// PrintStringNoDescription is the same as PrintString but doesn't print descriptions
+func PrintStringNoDescription(document, definition *ast.Document) (string, error) {
+	printer := Printer{
+		skipDescription: true,
+	}
+
+	buff := &bytes.Buffer{}
+	err := printer.Print(document, definition, buff)
+	out := buff.String()
+
+	return out, err
+}
+
 // PrintStringIndent is the same as PrintIndent but returns a string instead of writing to an io.Writer
 func PrintStringIndent(document, definition *ast.Document, indent string) (string, error) {
 	buff := &bytes.Buffer{}
@@ -70,10 +83,10 @@ type Printer struct {
 	indent          []byte
 	space           bool // space and indent cannot be used together
 	skipDescription bool
-
-	visitor    printVisitor
-	walker     astvisitor.SimpleWalker
-	registered bool
+	indent          []byte
+	visitor         printVisitor
+	walker          astvisitor.SimpleWalker
+	registered      bool
 }
 
 // Print starts the actual AST printing
@@ -105,6 +118,7 @@ type printVisitor struct {
 	skipDescription            bool
 	space                      bool
 	isDirectiveRepeatable      bool
+	skipDescription            bool
 }
 
 func (p *printVisitor) write(data []byte) {
