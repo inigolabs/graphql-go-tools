@@ -1,0 +1,9 @@
+githubRepoOwner: inigolabs
+githubRepoName: graphql-go-tools
+githubHost: github.com
+requireChecks: false
+requireApproval: true
+githubRemote: origin
+githubBranch: master
+remoteBranches: []
+mergeMethod: rebase
