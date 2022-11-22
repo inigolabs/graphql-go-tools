@@ -10,10 +10,33 @@ import (
 	"github.com/wundergraph/graphql-go-tools/pkg/lexer/literal"
 )
 
+func WithIdent(ident []byte) func(p *Printer) {
+	return func(p *Printer) {
+		p.indent = ident
+	}
+}
+
+func WithSpace() func(p *Printer) {
+	return func(p *Printer) {
+		p.space = true
+	}
+}
+
+func WithNoDescription() func(p *Printer) {
+	return func(p *Printer) {
+		p.skipDescription = true
+	}
+}
+
 // Print takes a document as well as a definition (optional) and prints it to the io.Writer.
 // The definition is only necessary in case a GraphQL Operation should be printed.
-func Print(document, definition *ast.Document, out io.Writer) error {
+func Print(document, definition *ast.Document, out io.Writer, options ...func(*Printer)) error {
 	printer := Printer{}
+
+	for _, o := range options {
+		o(&printer)
+	}
+
 	return printer.Print(document, definition, out)
 }
 
@@ -26,21 +49,9 @@ func PrintIndent(document, definition *ast.Document, indent []byte, out io.Write
 }
 
 // PrintString is the same as Print but returns a string instead of writing to an io.Writer
-func PrintString(document, definition *ast.Document) (string, error) {
+func PrintString(document, definition *ast.Document, options ...func(*Printer)) (string, error) {
 	buff := &bytes.Buffer{}
-	err := Print(document, definition, buff)
-	out := buff.String()
-	return out, err
-}
-
-// PrintStringNoDescription is the same as PrintString but doesn't print descriptions
-func PrintStringNoDescription(document, definition *ast.Document) (string, error) {
-	printer := Printer{
-		skipDescription: true,
-	}
-
-	buff := &bytes.Buffer{}
-	err := printer.Print(document, definition, buff)
+	err := Print(document, definition, buff, options...)
 	out := buff.String()
 
 	return out, err
@@ -57,6 +68,7 @@ func PrintStringIndent(document, definition *ast.Document, indent string) (strin
 // Printer walks a GraphQL document and prints it as a string
 type Printer struct {
 	indent          []byte
+	space           bool // space and indent cannot be used together
 	skipDescription bool
 
 	visitor    printVisitor
@@ -69,6 +81,7 @@ type Printer struct {
 func (p *Printer) Print(document, definition *ast.Document, out io.Writer) error {
 	p.visitor.indent = p.indent
 	p.visitor.skipDescription = p.skipDescription
+	p.visitor.space = p.space
 	p.visitor.err = nil
 	p.visitor.document = document
 	p.visitor.out = out
@@ -91,6 +104,7 @@ type printVisitor struct {
 	isFirstDirectiveLocation   bool
 	isDirectiveRepeatable      bool
 	skipDescription            bool
+	space                      bool
 }
 
 func (p *printVisitor) write(data []byte) {
@@ -128,9 +142,9 @@ func (p *printVisitor) writeIndented(data []byte) {
 	}
 	depth := p.indentationDepth()
 	for i := 0; i < depth; i++ {
-		_, p.err = p.out.Write(p.indent)
+		p.write(p.indent)
 	}
-	_, p.err = p.out.Write(data)
+	p.write(data)
 }
 
 func (p *printVisitor) must(err error) {
@@ -223,6 +237,9 @@ func (p *printVisitor) EnterVariableDefinition(ref int) {
 func (p *printVisitor) LeaveVariableDefinition(ref int) {
 	if !p.document.VariableDefinitionsAfter(ref) {
 		p.write(literal.RPAREN)
+		if p.space && p.indent == nil {
+			p.write(literal.SPACE)
+		}
 	} else {
 		p.write(literal.COMMA)
 		p.write(literal.SPACE)
@@ -242,6 +259,13 @@ func (p *printVisitor) EnterArgument(ref int) {
 func (p *printVisitor) LeaveArgument(ref int) {
 	if len(p.document.ArgumentsAfter(p.Ancestors[len(p.Ancestors)-1], ref)) == 0 {
 		p.write(literal.RPAREN)
+
+		if p.space && p.indent == nil {
+			if len(p.Ancestors) > 0 && p.Ancestors[len(p.Ancestors)-1].Kind == ast.NodeKindField &&
+				p.document.FieldHasSelections(p.Ancestors[len(p.Ancestors)-1].Ref) {
+				p.write(literal.SPACE)
+			}
+		}
 	}
 }
 
@@ -289,11 +313,25 @@ func (p *printVisitor) EnterSelectionSet(ref int) {
 	if p.indent != nil {
 		p.write(literal.LINETERMINATOR)
 	}
+
+	if p.space && p.indent == nil {
+		// if selectionSet has something inside
+		if len(p.document.SelectionSets[ref].SelectionRefs) != 0 {
+			p.write(literal.SPACE)
+		}
+	}
 }
 
 func (p *printVisitor) LeaveSelectionSet(ref int) {
 	if p.indent != nil {
 		p.write(literal.LINETERMINATOR)
+	}
+
+	if p.space && p.indent == nil {
+		// if selectionSet has something inside
+		if len(p.document.SelectionSets[ref].SelectionRefs) != 0 {
+			p.write(literal.SPACE)
+		}
 	}
 	p.writeIndented(literal.RBRACE)
 }
@@ -462,6 +500,9 @@ func (p *printVisitor) EnterFieldDefinition(ref int) {
 		if p.indent != nil {
 			p.write(literal.LINETERMINATOR)
 		}
+		if p.space && p.indent == nil {
+			p.write(literal.SPACE)
+		}
 	}
 	if p.document.FieldDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.FieldDefinitions[ref].Description, p.indent, p.indentationDepth(), p.out))
@@ -478,6 +519,10 @@ func (p *printVisitor) LeaveFieldDefinition(ref int) {
 	if p.document.FieldDefinitionIsLast(ref, p.Ancestors[len(p.Ancestors)-1]) {
 		if p.indent != nil {
 			p.write(literal.LINETERMINATOR)
+		}
+
+		if p.space && p.indent == nil {
+			p.write(literal.SPACE)
 		}
 		p.write(literal.RBRACE)
 	} else {
@@ -799,6 +844,9 @@ func (p *printVisitor) LeaveEnumValueDefinition(ref int) {
 		if p.indent != nil {
 			p.write(literal.LINETERMINATOR)
 		}
+		if p.space && p.indent == nil {
+			p.write(literal.SPACE)
+		}
 		p.write(literal.RBRACE)
 	} else {
 		if p.indent != nil {
@@ -970,6 +1018,9 @@ func (p *printVisitor) LeaveSchemaDefinition(ref int) {
 	if p.indent != nil {
 		p.write(literal.LINETERMINATOR)
 	}
+	if p.space && p.indent == nil {
+		p.write(literal.SPACE)
+	}
 	p.write(literal.RBRACE)
 	if !p.document.NodeIsLastRootNode(ast.Node{Kind: ast.NodeKindSchemaDefinition, Ref: ref}) {
 		if p.indent != nil {
@@ -992,6 +1043,9 @@ func (p *printVisitor) LeaveSchemaExtension(ref int) {
 	if p.indent != nil {
 		p.write(literal.LINETERMINATOR)
 	}
+	if p.space && p.indent == nil {
+		p.write(literal.SPACE)
+	}
 	p.write(literal.RBRACE)
 	if !p.document.NodeIsLastRootNode(ast.Node{Kind: ast.NodeKindSchemaExtension, Ref: ref}) {
 		if p.indent != nil {
@@ -1008,6 +1062,9 @@ func (p *printVisitor) EnterRootOperationTypeDefinition(ref int) {
 		p.write(literal.LBRACE)
 		if p.indent != nil {
 			p.write(literal.LINETERMINATOR)
+		}
+		if p.space && p.indent == nil {
+			p.write(literal.SPACE)
 		}
 	}
 	switch p.document.RootOperationTypeDefinitions[ref].OperationType {
