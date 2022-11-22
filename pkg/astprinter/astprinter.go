@@ -66,7 +66,6 @@ func PrintStringNoDescription(document, definition *ast.Document) (string, error
 	buff := &bytes.Buffer{}
 	err := printer.Print(document, definition, buff)
 	out := buff.String()
-
 	return out, err
 }
 
@@ -83,7 +82,6 @@ type Printer struct {
 	indent          []byte
 	space           bool // space and indent cannot be used together
 	skipDescription bool
-	indent          []byte
 	visitor         printVisitor
 	walker          astvisitor.SimpleWalker
 	registered      bool
@@ -119,6 +117,7 @@ type printVisitor struct {
 	space                      bool
 	isDirectiveRepeatable      bool
 	skipDescription            bool
+	space                      bool
 }
 
 func (p *printVisitor) write(data []byte) {
