@@ -896,6 +896,45 @@ func TestParser_Parse(t *testing.T) {
 				}
 			})
 		})
+		// Workaround for graphene issue: https://github.com/graphql-python/graphene/issues/1209
+		t.Run("implements optional variant - comma separated", func(t *testing.T) {
+			run(`type Car implements IVehicle & IMetrics, IWheel {}`, parse, false, func(doc *ast.Document, extra interface{}) {
+				person := doc.ObjectTypeDefinitions[0]
+				personName := doc.Input.ByteSliceString(person.Name)
+				if personName != "Car" {
+					panic("want Car")
+				}
+				// interfaces
+
+				if len(person.ImplementsInterfaces.Refs) != 3 {
+					panic("want 3 interfaces")
+				}
+
+				implementsVehicle := doc.Types[person.ImplementsInterfaces.Refs[0]]
+				if implementsVehicle.TypeKind != ast.TypeKindNamed {
+					panic("want TypeKindNamed")
+				}
+				if doc.Input.ByteSliceString(implementsVehicle.Name) != "IVehicle" {
+					panic("want IVehicle")
+				}
+
+				implementsMetrics := doc.Types[person.ImplementsInterfaces.Refs[1]]
+				if implementsMetrics.TypeKind != ast.TypeKindNamed {
+					panic("want TypeKindNamed")
+				}
+				if doc.Input.ByteSliceString(implementsMetrics.Name) != "IMetrics" {
+					panic("want IMetrics")
+				}
+
+				implementsWheel := doc.Types[person.ImplementsInterfaces.Refs[2]]
+				if implementsWheel.TypeKind != ast.TypeKindNamed {
+					panic("want TypeKindNamed")
+				}
+				if doc.Input.ByteSliceString(implementsWheel.Name) != "IWheel" {
+					panic("want IWheel")
+				}
+			})
+		})
 		t.Run("input value definition list", func(t *testing.T) {
 			run(`	type Person { 
 									"name description"

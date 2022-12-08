@@ -725,7 +725,6 @@ func (p *Parser) parseImplementsInterfaces() (list ast.TypeList) {
 
 	p.read() // implements
 
-	acceptIdent := true
 	acceptAnd := true
 
 	for {
@@ -734,15 +733,12 @@ func (p *Parser) parseImplementsInterfaces() (list ast.TypeList) {
 		case keyword.AND:
 			if acceptAnd {
 				acceptAnd = false
-				acceptIdent = true
 				p.read()
 			} else {
 				p.errUnexpectedToken(p.read())
 				return
 			}
 		case keyword.IDENT:
-			if acceptIdent {
-				acceptIdent = false
 				acceptAnd = true
 				name := p.read()
 				ref := p.document.AddNamedTypeWithPosition(name.Literal, name.TextPosition)
@@ -750,12 +746,8 @@ func (p *Parser) parseImplementsInterfaces() (list ast.TypeList) {
 					list.Refs = p.document.Refs[p.document.NextRefIndex()][:0]
 				}
 				list.Refs = append(list.Refs, ref)
-			} else {
-				p.errUnexpectedToken(p.read())
-				return
-			}
 		default:
-			if acceptIdent {
+			if !acceptAnd {
 				p.errUnexpectedToken(p.read())
 			}
 			return
