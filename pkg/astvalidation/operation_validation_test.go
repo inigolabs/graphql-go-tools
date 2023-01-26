@@ -3855,6 +3855,7 @@ func TestValidationEdgeCases(t *testing.T) {
 			if withNormalization {
 				report := operationreport.Report{}
 				normalizer := astnormalization.NewWithOpts(
+					astnormalization.WithFragmentSpreadInline(),
 					astnormalization.WithExtractVariables(),
 					astnormalization.WithRemoveFragmentDefinitions(),
 					astnormalization.WithRemoveUnusedVariables(),

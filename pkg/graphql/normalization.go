@@ -23,6 +23,7 @@ func (r *Request) Normalize(schema *Schema) (result NormalizationResult, err err
 	r.document.Input.Variables = r.Variables
 
 	normalizer := astnormalization.NewWithOpts(
+		astnormalization.WithFragmentSpreadInline(),
 		astnormalization.WithExtractVariables(),
 		astnormalization.WithRemoveFragmentDefinitions(),
 		astnormalization.WithRemoveUnusedVariables(),
