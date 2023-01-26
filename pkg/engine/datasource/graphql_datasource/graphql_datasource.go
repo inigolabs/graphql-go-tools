@@ -1244,6 +1244,7 @@ func (p *Planner) replaceQueryType(definition *ast.Document) {
 func (p *Planner) normalizeOperation(operation, definition *ast.Document, report *operationreport.Report) (ok bool) {
 	report.Reset()
 	normalizer := astnormalization.NewWithOpts(
+		astnormalization.WithFragmentSpreadInline(),
 		astnormalization.WithExtractVariables(),
 		astnormalization.WithRemoveFragmentDefinitions(),
 		astnormalization.WithRemoveUnusedVariables(),
