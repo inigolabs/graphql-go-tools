@@ -101,6 +101,7 @@ func NewNormalizer(removeFragmentDefinitions, extractVariables bool) *OperationN
 		options: options{
 			removeFragmentDefinitions: removeFragmentDefinitions,
 			extractVariables:          extractVariables,
+			fragmentSpreadInline:      true, // hardcode for backward compatibility
 		},
 	}
 	normalizer.setupOperationWalkers()
@@ -126,6 +127,7 @@ func NewWithOpts(opts ...Option) *OperationNormalizer {
 }
 
 type options struct {
+	fragmentSpreadInline      bool
 	removeFragmentDefinitions bool
 	extractVariables          bool
 	removeUnusedVariables     bool
@@ -137,6 +139,12 @@ type Option func(options *options)
 func WithExtractVariables() Option {
 	return func(options *options) {
 		options.extractVariables = true
+	}
+}
+
+func WithFragmentSpreadInline() Option {
+	return func(options *options) {
+		options.fragmentSpreadInline = true
 	}
 }
 
@@ -162,7 +170,11 @@ func (o *OperationNormalizer) setupOperationWalkers() {
 	o.operationWalkers = make([]*astvisitor.Walker, 0, 4)
 
 	fragmentInline := astvisitor.NewWalker(48)
-	fragmentSpreadInline(&fragmentInline)
+
+	if o.options.fragmentSpreadInline {
+		fragmentSpreadInline(&fragmentInline)
+	}
+
 	directiveIncludeSkip(&fragmentInline)
 	o.operationWalkers = append(o.operationWalkers, &fragmentInline)
 
