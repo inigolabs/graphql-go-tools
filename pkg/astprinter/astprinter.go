@@ -104,6 +104,7 @@ type printVisitor struct {
 	isFirstDirectiveLocation   bool
 	skipDescription            bool
 	space                      bool
+	isDirectiveRepeatable      bool
 }
 
 func (p *printVisitor) write(data []byte) {
@@ -917,7 +918,6 @@ func (p *printVisitor) LeaveInputObjectTypeExtension(ref int) {
 }
 
 func (p *printVisitor) EnterDirectiveDefinition(ref int) {
-
 	if p.document.DirectiveDefinitions[ref].Description.IsDefined && !p.skipDescription {
 		p.must(p.document.PrintDescription(p.document.DirectiveDefinitions[ref].Description, nil, 0, p.out))
 		p.write(literal.LINETERMINATOR)
@@ -928,6 +928,7 @@ func (p *printVisitor) EnterDirectiveDefinition(ref int) {
 	p.write(literal.AT)
 	p.write(p.document.DirectiveDefinitionNameBytes(ref))
 	p.isFirstDirectiveLocation = true
+	p.isDirectiveRepeatable = p.document.DirectiveDefinitionIsRepeatable(ref)
 
 	p.inputValueDefinitionOpener = literal.LPAREN
 	p.inputValueDefinitionCloser = literal.RPAREN
@@ -947,6 +948,11 @@ func (p *printVisitor) LeaveDirectiveDefinition(ref int) {
 func (p *printVisitor) EnterDirectiveLocation(location ast.DirectiveLocation) {
 
 	if p.isFirstDirectiveLocation {
+		if p.isDirectiveRepeatable {
+			p.write(literal.SPACE)
+			p.write(literal.REPEATABLE)
+		}
+
 		p.isFirstDirectiveLocation = false
 		p.write(literal.SPACE)
 		p.write(literal.ON)
