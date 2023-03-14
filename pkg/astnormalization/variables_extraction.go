@@ -9,6 +9,7 @@ import (
 	"github.com/wundergraph/graphql-go-tools/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/pkg/astimport"
 	"github.com/wundergraph/graphql-go-tools/pkg/astvisitor"
+	"github.com/wundergraph/graphql-go-tools/pkg/operationreport"
 )
 
 func extractVariables(walker *astvisitor.Walker) *variablesExtractionVisitor {
@@ -195,4 +196,10 @@ func (v *variablesExtractionVisitor) extractObjectValue(objectField int, fieldVa
 	v.operation.OperationDefinitions[v.Ancestors[0].Ref].VariableDefinitions.Refs =
 		append(v.operation.OperationDefinitions[v.Ancestors[0].Ref].VariableDefinitions.Refs, newVariableRef)
 	v.operation.OperationDefinitions[v.Ancestors[0].Ref].HasVariableDefinitions = true
+}
+
+func ExtractVariables(doc, def *ast.Document, report *operationreport.Report) {
+	walker := astvisitor.NewWalker(48)
+	ev := extractVariables(&walker)
+	ev.Walk(doc, def, report)
 }
