@@ -776,5 +776,44 @@ func TestInputCoercionForList(t *testing.T) {
 				`{}`,
 				`{"a":{"list":[{"foo":"bar","list":[{"foo":"bar2","list":[{"nested":{"foo":"bar3","list":[{"foo":"bar4"}]}}]}]}]}}`, inputCoercionForList)
 		})
+
+		t.Run("nested list of integers with variable", func(t *testing.T) {
+			runWithVariables(t, extractVariables, inputCoercionForListDefinition, `
+			query($a: Int) {
+			  nestedList(ids: [[1], [$a, 3]]) {
+				id
+				name
+			  }
+			}`, ``,
+				`
+			query ($a: Int, $b: [Int], $c: Int) {
+			  nestedList(ids: [$b,[$a,$c]]) {
+				id
+				name
+			  }
+			}`, `{"a":5}`, `{"c":3,"b":[1],"a":5}`, inputCoercionForList)
+		})
+
+		t.Run("mutation deep nested in extreme list with variable", func(t *testing.T) {
+			runWithVariables(t, extractVariables, inputCoercionForListDefinition, `
+				mutation Mutate($a: Int!, $b: Int!) {
+					mutateNestedExtremeList(input: {
+						nested: {
+							stringList: "str"
+							intList: [$a, 5, $b]
+						}
+					}) 
+				}`, `Mutate`,
+				`
+				mutation Mutate($a: Int!, $b: Int!, $c: [String!], $d: Int!) {
+					mutateNestedExtremeList(input: {
+						nested: {
+							stringList: $c,
+							intList: [$a,$d,$b]
+						}
+					}) 
+				}`, `{"a":3,"b":4}`, `{"d":5,"c":["str"],"a":3,"b":4}`, inputCoercionForList)
+		})
+
 	})
 }
