@@ -347,7 +347,7 @@ func TestInputTemplate_Render(t *testing.T) {
 				err := template.Render(ctx, nil, buf)
 				assert.NoError(t, err)
 				out := buf.String()
-				assert.Equal(t, `null`, out)
+				assert.Equal(t, `{"key":null}`, out)
 			})
 
 			t.Run("null value for context variable - renders segment as null", func(t *testing.T) {

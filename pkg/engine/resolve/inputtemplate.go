@@ -83,9 +83,14 @@ func (i *InputTemplate) Render(ctx *Context, data []byte, preparedInput *fastbuf
 func (i *InputTemplate) renderObjectVariable(ctx context.Context, variables []byte, segment TemplateSegment, preparedInput *fastbuffer.FastBuffer) error {
 	value, valueType, offset, err := jsonparser.Get(variables, segment.VariableSourcePath...)
 	if err != nil || valueType == jsonparser.Null {
-		if i.SetTemplateOutputToNullOnVariableNull {
-			return setTemplateOutputNull
-		}
+		// commented out as it breaks functionality of composed keys, when one prop of the key is null
+		// Ex: @key(fields: "foo bar") -> when "bar" is null, query still needs to be sent.
+		// Without these lines, functionality of skipping queries is still there.
+		/*
+			if i.SetTemplateOutputToNullOnVariableNull {
+				return setTemplateOutputNull
+			}
+		*/
 		preparedInput.WriteBytes(literal.NULL)
 		return nil
 	}
