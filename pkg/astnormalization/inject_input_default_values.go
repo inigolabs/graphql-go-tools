@@ -170,6 +170,9 @@ func (v *inputFieldDefaultInjectionVisitor) processObjectOrListInput(fieldType i
 	}
 	finalVal := defaultValue
 	replaced := false
+	if valType == jsonparser.Null {
+		return finalVal, false, nil
+	}
 	valIsList := valType == jsonparser.Array
 	if fieldIsList && valIsList {
 		_, err := jsonparser.ArrayEach(varVal, v.jsonWalker(typeDoc.ResolveListOrNameType(fieldType), defaultValue, &node, typeDoc, &finalVal, &replaced))
