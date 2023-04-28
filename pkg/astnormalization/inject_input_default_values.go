@@ -154,6 +154,9 @@ func (v *inputFieldDefaultInjectionVisitor) processObjectOrListInput(fieldType i
 	if node.Kind == ast.NodeKindScalarTypeDefinition {
 		return finalVal, nil
 	}
+	if valType == jsonparser.Null {
+		return finalVal, nil
+	}
 	valIsList := valType == jsonparser.Array
 	if fieldIsList && valIsList {
 		_, err := jsonparser.ArrayEach(varVal, v.jsonWalker(typeDoc.ResolveListOrNameType(fieldType), defaultValue, &node, typeDoc, &finalVal))
