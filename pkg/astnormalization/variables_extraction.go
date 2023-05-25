@@ -2,13 +2,17 @@ package astnormalization
 
 import (
 	"bytes"
+
 	"github.com/tidwall/sjson"
 	"github.com/wundergraph/graphql-go-tools/internal/pkg/unsafebytes"
 	"github.com/wundergraph/graphql-go-tools/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/pkg/astimport"
 	"github.com/wundergraph/graphql-go-tools/pkg/astvisitor"
-	"github.com/wundergraph/graphql-go-tools/pkg/operationreport"
 )
+
+func ExtractVariables(walker *astvisitor.Walker) *variablesExtractionVisitor {
+	return extractVariables(walker)
+}
 
 func extractVariables(walker *astvisitor.Walker) *variablesExtractionVisitor {
 	visitor := &variablesExtractionVisitor{
@@ -249,15 +253,4 @@ func (v *variablesExtractionVisitor) extractListValue(objectField int, fieldValu
 	v.operation.OperationDefinitions[v.Ancestors[0].Ref].VariableDefinitions.Refs =
 		append(v.operation.OperationDefinitions[v.Ancestors[0].Ref].VariableDefinitions.Refs, newVariableRef)
 	v.operation.OperationDefinitions[v.Ancestors[0].Ref].HasVariableDefinitions = true
-}
-
-func ExtractVariables(doc, def *ast.Document, report *operationreport.Report) {
-	walker := astvisitor.NewWalker(48)
-
-	inputCoercionForList(&walker)
-	extractVariables(&walker)
-	extractVariablesDefaultValue(&walker)
-	injectInputFieldDefaults(&walker)
-
-	walker.Walk(doc, def, report)
 }
