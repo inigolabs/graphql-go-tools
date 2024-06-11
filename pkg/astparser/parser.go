@@ -1603,7 +1603,10 @@ func (p *Parser) parseSchemaExtension(extend position.Position) {
 		schemaDefinition.Directives = p.parseDirectiveList()
 		schemaDefinition.HasDirectives = len(schemaDefinition.Directives.Refs) > 0
 	}
-	p.parseRootOperationTypeDefinitionList(&schemaDefinition.RootOperationTypeDefinitions)
+
+	if p.peekEquals(keyword.LBRACE) {
+		p.parseRootOperationTypeDefinitionList(&schemaDefinition.RootOperationTypeDefinitions)
+	}
 
 	schemaExtension := ast.SchemaExtension{
 		ExtendLiteral:    extend,
