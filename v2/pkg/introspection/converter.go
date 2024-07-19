@@ -35,6 +35,22 @@ func (j *JsonConverter) GraphQLDocument(introspectionJSON io.Reader) (*ast.Docum
 	return j.doc, nil
 }
 
+// ParseSchema returns an *ast.Document from an introspection Schema structure
+func (j *JsonConverter) ParseSchema(schema *Schema) (*ast.Document, error) {
+	j.schema = schema
+	j.doc = ast.NewDocument()
+
+	if j.parser == nil {
+		j.parser = astparser.NewParser()
+	}
+
+	if err := j.importSchema(); err != nil {
+		return nil, fmt.Errorf("failed to convert graphql schema: %w", err)
+	}
+
+	return j.doc, nil
+}
+
 func (j *JsonConverter) importSchema() error {
 	j.doc.ImportSchemaDefinition(j.schema.TypeNames())
 
