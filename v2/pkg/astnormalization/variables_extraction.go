@@ -12,6 +12,10 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/internal/unsafebytes"
 )
 
+func ExtractVariables(walker *astvisitor.Walker) *variablesExtractionVisitor {
+	return extractVariables(walker)
+}
+
 func extractVariables(walker *astvisitor.Walker) *variablesExtractionVisitor {
 	visitor := &variablesExtractionVisitor{
 		Walker: walker,
