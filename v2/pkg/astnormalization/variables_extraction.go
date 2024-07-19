@@ -141,7 +141,21 @@ func (v *variablesExtractionVisitor) traverseValue(value ast.Value, argRef, inpu
 	case ast.ValueKindList:
 		for _, ref := range v.operation.ListValues[value.Ref].Refs {
 			listValue := v.operation.Value(ref)
-			v.traverseValue(listValue, argRef, inputValueDefinition)
+			valueType, _ := v.definition.FindOrCreateInputListValueDefinition(inputValueDefinition)
+
+			switch listValue.Kind {
+			case ast.ValueKindVariable:
+				continue
+			case ast.ValueKindObject:
+				v.traverseValue(listValue, argRef, inputValueDefinition)
+				continue
+			default:
+				if v.operation.ValueContainsVariable(listValue) {
+					v.traverseValue(listValue, argRef, valueType)
+					continue
+				}
+				v.extractListValue(ref, listValue, valueType)
+			}
 		}
 	case ast.ValueKindObject:
 		objectValueRefs := make([]int, len(v.operation.ObjectValues[value.Ref].Refs))
@@ -258,4 +272,45 @@ func (v *variablesExtractionVisitor) extractedVariablesContainsKey(key []byte, i
 		}
 	}
 	return false
+}
+
+func (v *variablesExtractionVisitor) extractListValue(objectField int, fieldValue ast.Value, inputValueDefinition int) {
+	variableNameBytes := v.operation.GenerateUnusedVariableDefinitionName(v.Ancestors[0].Ref)
+	valueBytes, err := v.operation.ValueToJSON(fieldValue)
+	if err != nil {
+		return
+	}
+	v.operation.Input.Variables, err = sjson.SetRawBytes(v.operation.Input.Variables, unsafebytes.BytesToString(variableNameBytes), valueBytes)
+	if err != nil {
+		v.StopWithInternalErr(err)
+		return
+	}
+
+	variable := ast.VariableValue{
+		Name: v.operation.Input.AppendInputBytes(variableNameBytes),
+	}
+
+	v.operation.VariableValues = append(v.operation.VariableValues, variable)
+
+	varRef := len(v.operation.VariableValues) - 1
+
+	v.operation.Values[objectField].Kind = ast.ValueKindVariable
+	v.operation.Values[objectField].Ref = varRef
+
+	defType := v.definition.InputValueDefinitionType(inputValueDefinition)
+	importedDefType := v.importer.ImportType(defType, v.definition, v.operation)
+
+	v.operation.VariableDefinitions = append(v.operation.VariableDefinitions, ast.VariableDefinition{
+		VariableValue: ast.Value{
+			Kind: ast.ValueKindVariable,
+			Ref:  varRef,
+		},
+		Type: importedDefType,
+	})
+
+	newVariableRef := len(v.operation.VariableDefinitions) - 1
+
+	v.operation.OperationDefinitions[v.Ancestors[0].Ref].VariableDefinitions.Refs =
+		append(v.operation.OperationDefinitions[v.Ancestors[0].Ref].VariableDefinitions.Refs, newVariableRef)
+	v.operation.OperationDefinitions[v.Ancestors[0].Ref].HasVariableDefinitions = true
 }

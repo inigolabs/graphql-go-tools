@@ -313,6 +313,33 @@ func (d *Document) NodeInputFieldDefinitionByName(node Node, name ByteSlice) (in
 	return 0, false
 }
 
+func (d *Document) FindOrCreateInputListValueDefinition(listInputValueDefinition int) (int, bool) {
+	var created bool
+	listType := d.Types[d.InputValueDefinitions[listInputValueDefinition].Type]
+	if listType.OfType == -1 {
+		return -1, created
+	}
+
+	valueType := -1
+	for typeRef, t := range d.InputValueDefinitions {
+		if t.Type == listType.OfType {
+			valueType = typeRef
+			break
+		}
+	}
+	if valueType == -1 {
+		created = true
+		// create input definition value for underlying values of the list
+		d.InputValueDefinitions = append(d.InputValueDefinitions, InputValueDefinition{
+			Name: listType.Name,
+			Type: listType.OfType,
+		})
+		valueType = len(d.InputValueDefinitions) - 1
+	}
+
+	return valueType, created
+}
+
 func (d *Document) NodeFieldDefinitionByName(node Node, fieldName ByteSlice) (definition int, exists bool) {
 	for _, i := range d.NodeFieldDefinitions(node) {
 		if bytes.Equal(d.Input.ByteSlice(d.FieldDefinitions[i].Name), fieldName) {
